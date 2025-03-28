@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Check, ArrowRight, Building2, Home } from "lucide-react";
+import { Check, ArrowRight, Building2, Home, Newspaper, FileText } from "lucide-react";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Card, CardContent } from "@/components/ui/card";
 import { Design } from "@shared/schema";
@@ -35,12 +35,12 @@ const templateCategories = [
   {
     id: "brochure",
     title: "Property Brochures",
-    icon: <Home className="h-5 w-5 mr-2" />,
+    icon: <FileText className="h-5 w-5 mr-2" />,
   },
   {
     id: "flyer",
     title: "Property Flyers",
-    icon: <Home className="h-5 w-5 mr-2" />,
+    icon: <Newspaper className="h-5 w-5 mr-2" />,
   }
 ];
 
@@ -56,6 +56,13 @@ export function CreateDesignWizard({ open, onOpenChange }: CreateDesignWizardPro
   // Fetch templates by category
   const { data: categoryTemplates = [], isLoading: templatesLoading } = useQuery({
     queryKey: ['/api/designs/category', selectedCategory],
+    queryFn: async () => {
+      const response = await fetch(`/api/designs/category?category=${selectedCategory}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch templates');
+      }
+      return response.json();
+    },
     enabled: selectedCategory !== "",
   });
 

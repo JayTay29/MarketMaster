@@ -26,6 +26,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch designs by category" });
     }
   });
+  
+  // get designs by category as a query param (fallback for the wizard)
+  app.get("/api/designs/category", async (req, res) => {
+    try {
+      const category = req.query.category as string;
+      
+      if (!category) {
+        return res.status(404).json({ message: "Design not found" });
+      }
+      
+      const designs = await storage.getDesignsByCategory(category);
+      res.json(designs);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch designs by category" });
+    }
+  });
 
   // get design by id
   app.get("/api/designs/:id", async (req, res) => {

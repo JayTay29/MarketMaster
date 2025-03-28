@@ -60,5 +60,55 @@ export const properties: Property[] = [
     price: 1750000,
     type: 'Townhouse',
     image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&h=400&fit=crop'
+  },
+  {
+    id: 6,
+    address: '8832 Mulholland Drive, Los Angeles, CA 90046',
+    bedrooms: 6,
+    bathrooms: 5.5,
+    squareFeet: 4800,
+    price: 3950000,
+    type: 'Single Family',
+    image: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=600&h=400&fit=crop'
+  },
+  {
+    id: 7,
+    address: '422 Palm Ave, Manhattan Beach, CA 90266',
+    bedrooms: 4,
+    bathrooms: 3.5,
+    squareFeet: 2850,
+    price: 2875000,
+    type: 'Single Family',
+    image: 'https://images.unsplash.com/photo-1602343168117-bb8ffe3e2e9f?w=600&h=400&fit=crop'
+  },
+  {
+    id: 8,
+    address: '15 Marina Blvd, Marina del Rey, CA 90292',
+    bedrooms: 2,
+    bathrooms: 2,
+    squareFeet: 1450,
+    price: 1250000,
+    type: 'Condo',
+    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&h=400&fit=crop'
+  },
+  {
+    id: 9,
+    address: '6700 Melrose Avenue, Hollywood, CA 90038',
+    bedrooms: 3,
+    bathrooms: 2.5,
+    squareFeet: 2100,
+    price: 1650000,
+    type: 'Townhouse',
+    image: 'https://images.unsplash.com/photo-1576941089067-2de3c901e126?w=600&h=400&fit=crop'
+  },
+  {
+    id: 10,
+    address: '9921 Sunset Drive, Pacific Palisades, CA 90272',
+    bedrooms: 5,
+    bathrooms: 4.5,
+    squareFeet: 4200,
+    price: 4500000,
+    type: 'Single Family',
+    image: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&h=400&fit=crop'
   }
 ];
