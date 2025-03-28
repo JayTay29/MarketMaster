@@ -209,7 +209,7 @@ export default function TemplatesGrid({ designs, category }: TemplatesGridProps)
           className="overflow-hidden transition-all duration-300 hover:shadow-md border border-gray-200 hover:-translate-y-1 cursor-pointer"
           onClick={() => handleTemplateClick(design)}
         >
-          <AspectRatio ratio={3/4} className="rounded-t-xl overflow-hidden">
+          <AspectRatio ratio={1} className="rounded-t-xl overflow-hidden">
             {design.thumbnail ? (
               <img 
                 src={design.thumbnail} 
