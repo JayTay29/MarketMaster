@@ -60,14 +60,14 @@ interface NavLinkProps {
 function NavLink({ href, label, isActive }: NavLinkProps) {
   return (
     <Link href={href}>
-      <a className={cn(
-        "px-1 py-2 text-sm font-medium font-inter transition-colors",
+      <span className={cn(
+        "px-1 py-2 text-sm font-medium font-inter transition-colors cursor-pointer",
         isActive 
           ? "text-primary border-b-2 border-primary" 
           : "text-gray-400 hover:text-gray-900"
       )}>
         {label}
-      </a>
+      </span>
     </Link>
   );
 }
