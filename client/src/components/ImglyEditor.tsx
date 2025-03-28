@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import CreativeEditorSDK from '@cesdk/cesdk-js';
 import { Design } from '@shared/schema';
 import { cn } from '@/lib/utils';
@@ -14,130 +14,81 @@ interface ImglyEditorProps {
 export default function ImglyEditor({ design, onSave, className }: ImglyEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [cesdkInstance, setCesdkInstance] = useState<any>(null);
+  const [instance, setInstance] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!editorRef.current) return;
+    let cesdk: any = null;
     
-    // Only initialize once
-    if (cesdkInstance) return;
-
-    setIsLoading(true);
-
-    // Initialize the Creative Editor SDK
-    const initializeEditor = async () => {
+    const initEditor = async () => {
+      if (!editorRef.current) return;
+      
       try {
+        // Basic configuration for the CE.SDK
         const config = {
-          // Set a license file or use environment variable
           license: import.meta.env.VITE_IMGLY_LICENSE || '',
-          callbacks: {
-            onExport: (blob: Blob) => {
-              console.log('Design exported:', blob);
-              // You can add additional export handling here
-            },
-            onSave: async () => {
-              if (cesdkInstance) {
-                try {
-                  // Get the current scene as JSON
-                  const scene = await cesdkInstance.scene.exportToJSON();
-                  
-                  // Transform scene to match our Design content structure
-                  const updatedDesign = {
-                    ...design,
-                    content: {
-                      objects: scene.blocks || [],
-                      ...scene
-                    }
-                  };
-                  
-                  // Call onSave callback if provided
-                  if (onSave) {
-                    onSave(updatedDesign);
-                  }
-                  
-                  toast({
-                    title: "Design saved",
-                    description: "Your design has been saved successfully."
-                  });
-                } catch (error) {
-                  console.error('Error saving design:', error);
-                  toast({
-                    title: "Save failed",
-                    description: "There was an error saving your design.",
-                    variant: "destructive"
-                  });
-                }
-              }
-            }
-          },
           ui: {
             elements: {
               navigation: {
                 action: {
                   export: true,
                   save: true,
-                  download: true,
-                  close: true
+                  download: true
                 }
               },
               panels: {
-                inspector: true,
-                assetLibrary: true,
-                textDesign: true
-              },
-              libraries: {
-                shapes: true,
-                stickers: true,
-                text: true,
-                templates: true,
-                uploads: true
+                inspector: true
               }
             }
           },
-          // Any additional configuration
-          canvas: {
-            width: design.width,
-            height: design.height
-          }
+          baseURL: 'https://cdn.img.ly/packages/imgly/cesdk-js/1.19.0/assets'
         };
-
-        // Create the editor instance using the official CreativeEditorSDK.create method
-        const instance = await CreativeEditorSDK.create(editorRef.current, config);
-        setCesdkInstance(instance);
-
-        // Import the design content if it exists
-        if (design.content) {
-          try {
-            // Convert our content format to CE.SDK format if needed
-            const content = typeof design.content === 'string' 
-              ? JSON.parse(design.content) 
-              : design.content;
+        
+        // Create the editor
+        cesdk = await CreativeEditorSDK.create(editorRef.current, config);
+        setInstance(cesdk);
+        
+        // Add demo assets
+        await cesdk.addDefaultAssetSources();
+        await cesdk.addDemoAssetSources({ sceneMode: 'Design' });
+        
+        // Create a default scene
+        await cesdk.createDesignScene();
+        
+        // Set up save handler
+        cesdk.engine.on('document.save', async () => {
+          if (onSave) {
+            try {
+              // Export the design as JSON
+              const blob = await cesdk.export('json');
+              const sceneData = typeof blob === 'string' ? JSON.parse(blob) : blob;
               
-            // Load the scene
-            if (content.objects && Array.isArray(content.objects)) {
-              // If our format has objects array, we need to convert it
-              await instance.scene.importFromJSON({
-                blocks: content.objects,
-                ...content
+              // Update the design with new content
+              const updatedDesign = {
+                ...design,
+                content: sceneData
+              };
+              
+              onSave(updatedDesign);
+              
+              toast({
+                title: "Design saved",
+                description: "Your changes have been saved successfully."
               });
-            } else {
-              // Otherwise try to load directly
-              await instance.scene.importFromJSON(content);
+            } catch (error) {
+              console.error('Error saving design:', error);
+              toast({
+                title: "Save failed",
+                description: "There was an error saving your design.",
+                variant: "destructive"
+              });
             }
-          } catch (error) {
-            console.error('Error loading design content:', error);
-            toast({
-              title: "Load error",
-              description: "Could not load the design content.",
-              variant: "destructive"
-            });
           }
-        }
-
+        });
+        
         setIsLoading(false);
       } catch (error) {
-        console.error('Error initializing CE.SDK:', error);
+        console.error('Error initializing Creative Editor SDK:', error);
         toast({
           title: "Editor initialization failed",
           description: "Could not load the image editor.",
@@ -146,17 +97,16 @@ export default function ImglyEditor({ design, onSave, className }: ImglyEditorPr
         setIsLoading(false);
       }
     };
-
-    initializeEditor();
-
-    // Cleanup function
+    
+    initEditor();
+    
+    // Cleanup
     return () => {
-      if (cesdkInstance) {
-        cesdkInstance.dispose();
-        setCesdkInstance(null);
+      if (cesdk) {
+        cesdk.dispose();
       }
     };
-  }, [design.id]); // Only re-initialize if design.id changes
+  }, [design.id, onSave, toast]);
 
   return (
     <div className={cn("w-full h-full", className)}>
