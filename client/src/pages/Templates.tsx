@@ -7,7 +7,8 @@ import { ArrowLeft, FilterIcon, Search } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import TemplatesGrid from "@/components/TemplatesGrid";
-import { useState } from "react";
+import SubcategoryManager from "@/components/SubcategoryManager";
+import { useState, useEffect } from "react";
 
 export default function Templates() {
   const { category } = useParams();
@@ -15,30 +16,54 @@ export default function Templates() {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentTab, setCurrentTab] = useState("all");
+  const [tabsForCategory, setTabsForCategory] = useState<string[]>(["all"]);
   
-  const { data: designs, isLoading, error } = useQuery({
-    queryKey: [`/api/designs/category/${category}`],
+  // Get designs by category
+  const { data: designs, isLoading: designsLoading, error: designsError } = useQuery({
+    queryKey: [`/api/designs/category/${category || 'signboard'}`],
   });
 
-  if (error) {
-    toast({
-      title: "Error",
-      description: "Failed to load templates. Please try again.",
-      variant: "destructive",
-    });
-  }
+  // Get category info with subcategories
+  const { data: categoryData, isLoading: categoryLoading, error: categoryError } = useQuery({
+    queryKey: [`/api/categories/${category || 'signboard'}`],
+  });
+
+  // Set current tab and tabs for category when category data loads
+  useEffect(() => {
+    if (categoryData && Array.isArray(categoryData.subcategories)) {
+      setTabsForCategory(categoryData.subcategories);
+      
+      // Reset to "all" tab when category changes
+      setCurrentTab("all");
+    } else if (categoryData) {
+      // Default to just "all" if no subcategories found
+      setTabsForCategory(["all"]);
+      setCurrentTab("all");
+    }
+  }, [categoryData]);
+
+  // Handle errors
+  useEffect(() => {
+    if (designsError) {
+      toast({
+        title: "Error",
+        description: "Failed to load templates. Please try again.",
+        variant: "destructive",
+      });
+    }
+    
+    if (categoryError) {
+      toast({
+        title: "Error",
+        description: "Failed to load category information. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [designsError, categoryError, toast]);
 
   const handleBack = () => {
     navigate("/");
   };
-
-  const templateTabs = {
-    signboard: ["all", "store-front", "event", "promotion", "directional"],
-    brochure: ["all", "business", "marketing", "event", "travel"],
-    flyer: ["all", "event", "promotional", "business", "service"]
-  };
-
-  const tabsForCategory = templateTabs[category as keyof typeof templateTabs] || templateTabs.signboard;
 
   const getCategoryTitle = () => {
     switch (category) {
@@ -49,16 +74,24 @@ export default function Templates() {
     }
   };
 
-  const filteredDesigns = designs?.filter(design => {
-    if (searchQuery && !design.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
-    if (currentTab !== "all") {
-      // In a real app, we'd have subtypes for filtering
-      return true;
-    }
-    return true;
-  });
+  // Filter designs by search query and selected tab/subcategory
+  const filteredDesigns = Array.isArray(designs) 
+    ? designs.filter(design => {
+        // Filter by search query
+        if (searchQuery && design.name && !design.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+          return false;
+        }
+        
+        // Filter by subcategory
+        if (currentTab !== "all" && design.subcategory) {
+          return design.subcategory === currentTab;
+        }
+        
+        return true;
+      })
+    : [];
+
+  const isLoading = designsLoading || categoryLoading;
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -89,10 +122,13 @@ export default function Templates() {
             />
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           </div>
-          <Button variant="outline" size="sm">
-            <FilterIcon className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
+          <div className="flex space-x-2">
+            <Button variant="outline" size="sm">
+              <FilterIcon className="h-4 w-4 mr-2" />
+              Filter
+            </Button>
+            <SubcategoryManager category={category || "signboard"} />
+          </div>
         </div>
       </div>
 
@@ -121,7 +157,10 @@ export default function Templates() {
           ))}
         </div>
       ) : (
-        <TemplatesGrid designs={filteredDesigns || []} category={category} />
+        <TemplatesGrid 
+          designs={filteredDesigns || []} 
+          category={category || "signboard"} 
+        />
       )}
     </div>
   );

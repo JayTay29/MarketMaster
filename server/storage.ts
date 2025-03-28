@@ -1,4 +1,4 @@
-import { designs, type Design, type InsertDesign, type User, type InsertUser, users } from "@shared/schema";
+import { designs, categories, type Design, type InsertDesign, type User, type InsertUser, users, type Category, type InsertCategory } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -8,26 +8,66 @@ export interface IStorage {
   // Design management
   getAllDesigns(): Promise<Design[]>;
   getDesignsByCategory(category: string): Promise<Design[]>;
+  getDesignsByCategoryAndSubcategory(category: string, subcategory: string): Promise<Design[]>;
   getDesign(id: number): Promise<Design | undefined>;
   createDesign(design: InsertDesign): Promise<Design>;
   updateDesign(id: number, design: Partial<InsertDesign>): Promise<Design | undefined>;
   deleteDesign(id: number): Promise<boolean>;
+  
+  // Category management
+  getAllCategories(): Promise<Category[]>;
+  getCategory(name: string): Promise<Category | undefined>;
+  createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(name: string, subcategories: string[]): Promise<Category | undefined>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private designsData: Map<number, Design>;
+  private categoriesData: Map<string, Category>;
   private userCurrentId: number;
   private designCurrentId: number;
+  private categoryCurrentId: number;
 
   constructor() {
     this.users = new Map();
     this.designsData = new Map();
+    this.categoriesData = new Map();
     this.userCurrentId = 1;
     this.designCurrentId = 1;
+    this.categoryCurrentId = 1;
+    
+    // Initialize default categories with subcategories
+    this.initializeCategories();
     
     // Add sample designs
     this.initializeSampleDesigns();
+  }
+  
+  private initializeCategories() {
+    // Default categories and subcategories
+    const defaultCategories = [
+      {
+        id: this.categoryCurrentId++,
+        name: "signboard",
+        subcategories: ["all", "store-front", "event", "promotion", "directional"]
+      },
+      {
+        id: this.categoryCurrentId++,
+        name: "brochure",
+        subcategories: ["all", "business", "marketing", "event", "travel"]
+      },
+      {
+        id: this.categoryCurrentId++,
+        name: "flyer",
+        subcategories: ["all", "event", "promotional", "business", "service"]
+      }
+    ];
+    
+    // Add to database
+    defaultCategories.forEach(category => {
+      this.categoriesData.set(category.name, category);
+    });
   }
 
   private initializeSampleDesigns() {
@@ -1004,9 +1044,16 @@ export class MemStorage implements IStorage {
     const id = this.designCurrentId++;
     const now = new Date();
     
+    // Ensure required fields have values
     const design: Design = {
-      ...insertDesign,
       id,
+      name: insertDesign.name || '',
+      category: insertDesign.category,
+      subcategory: insertDesign.subcategory || null,
+      content: insertDesign.content,
+      width: insertDesign.width,
+      height: insertDesign.height,
+      thumbnail: insertDesign.thumbnail || null,
       createdAt: now,
       updatedAt: now
     };
@@ -1022,9 +1069,20 @@ export class MemStorage implements IStorage {
       return undefined;
     }
     
+    // Ensure we have all required fields
     const updated: Design = {
       ...existing,
       ...updateData,
+      // Ensure required fields are present
+      id: id,
+      name: updateData.name || existing.name,
+      category: updateData.category || existing.category,
+      subcategory: updateData.subcategory !== undefined ? updateData.subcategory : existing.subcategory,
+      content: updateData.content || existing.content,
+      width: updateData.width || existing.width,
+      height: updateData.height || existing.height,
+      thumbnail: updateData.thumbnail !== undefined ? updateData.thumbnail : existing.thumbnail,
+      createdAt: existing.createdAt,
       updatedAt: new Date()
     };
     
@@ -1034,6 +1092,60 @@ export class MemStorage implements IStorage {
 
   async deleteDesign(id: number): Promise<boolean> {
     return this.designsData.delete(id);
+  }
+  
+  // Category management functions
+  async getDesignsByCategoryAndSubcategory(category: string, subcategory: string): Promise<Design[]> {
+    const designs = Array.from(this.designsData.values())
+      .filter(design => design.category === category);
+      
+    if (subcategory && subcategory !== "all") {
+      return designs.filter(design => design.subcategory === subcategory);
+    }
+    
+    return designs;
+  }
+  
+  async getAllCategories(): Promise<Category[]> {
+    return Array.from(this.categoriesData.values());
+  }
+  
+  async getCategory(name: string): Promise<Category | undefined> {
+    return this.categoriesData.get(name);
+  }
+  
+  async createCategory(category: InsertCategory): Promise<Category> {
+    // Ensure required fields have values
+    const newCategory: Category = {
+      id: this.categoryCurrentId++,
+      name: category.name,
+      // Default to just "all" if no subcategories provided
+      subcategories: category.subcategories || ["all"]
+    };
+    
+    this.categoriesData.set(category.name, newCategory);
+    return newCategory;
+  }
+  
+  async updateCategory(name: string, subcategories: string[]): Promise<Category | undefined> {
+    const category = this.categoriesData.get(name);
+    
+    if (!category) {
+      return undefined;
+    }
+    
+    // Always include 'all' in subcategories
+    if (!subcategories.includes('all')) {
+      subcategories.unshift('all');
+    }
+    
+    const updated: Category = {
+      ...category,
+      subcategories
+    };
+    
+    this.categoriesData.set(name, updated);
+    return updated;
   }
 }
 
