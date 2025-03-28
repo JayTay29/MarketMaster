@@ -27,6 +27,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       {isEditorPage ? (
+        // Editor page doesn't use the sidebar for maximum workspace
         <div className="flex flex-col min-h-screen">
           <div className="flex-grow">
             <Router />
@@ -34,13 +35,12 @@ function App() {
           <Toaster />
         </div>
       ) : (
-        <div className="flex flex-col min-h-screen">
-          <Navbar>
-            <Router />
-          </Navbar>
-          <Toaster />
-        </div>
+        // Regular pages use the sidebar navigation
+        <Navbar>
+          <Router />
+        </Navbar>
       )}
+      <Toaster />
     </QueryClientProvider>
   );
 }
