@@ -70,7 +70,11 @@ export default function Editor() {
         height: design.height,
         category: design.category
       });
-      setCanvasObjects(design.content.objects || []);
+      if (design.content && typeof design.content === 'object' && 'objects' in design.content) {
+        setCanvasObjects(design.content.objects || []);
+      } else {
+        setCanvasObjects([]);
+      }
       setCanvasMode('editing');
     } else if (!isLoading && !id) {
       // New design with default values
