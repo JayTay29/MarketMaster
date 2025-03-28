@@ -5,11 +5,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Share2, Download, Undo, Redo } from "lucide-react";
-import EditorSidebar from "@/components/EditorSidebar";
-import EditorCanvas from "@/components/EditorCanvas";
-import EditorProperties from "@/components/EditorProperties";
+import ImglyEditor from "@/components/ImglyEditor";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useDesignStore } from "@/lib/design-store";
+import { Design } from "@shared/schema";
 
 export default function Editor() {
   const { id } = useParams();
@@ -63,15 +62,15 @@ export default function Editor() {
 
   // Initialize canvas with design data or default values
   useEffect(() => {
-    if (design) {
+    if (design && typeof design === 'object' && 'name' in design) {
       setDesignName(design.name);
       setCanvasProps({
-        width: design.width,
-        height: design.height,
-        category: design.category
+        width: design.width || 800,
+        height: design.height || 600,
+        category: design.category || 'signboard'
       });
       if (design.content && typeof design.content === 'object' && 'objects' in design.content) {
-        setCanvasObjects(design.content.objects || []);
+        setCanvasObjects(Array.isArray(design.content.objects) ? design.content.objects : []);
       } else {
         setCanvasObjects([]);
       }
@@ -144,24 +143,67 @@ export default function Editor() {
         </div>
       </div>
 
-      {/* Editor Content */}
-      <div className="flex-grow flex h-full">
-        {/* Left Sidebar */}
-        <EditorSidebar />
-
-        {/* Canvas Area */}
-        <div className="flex-grow relative">
-          <div className="absolute inset-0 overflow-auto bg-gray-50 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2720%27%20height%3D%2720%27%20viewBox%3D%270%200%2020%2020%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%3E%3Cg%20fill%3D%27%23000000%27%20fill-opacity%3D%270.05%27%20fill-rule%3D%27evenodd%27%3E%3Ccircle%20cx%3D%273%27%20cy%3D%273%27%20r%3D%271%27%2F%3E%3Ccircle%20cx%3D%2713%27%20cy%3D%2713%27%20r%3D%271%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E')] flex items-center justify-center">
-            <EditorCanvas 
-              width={canvasProps.width} 
-              height={canvasProps.height} 
-              isLoading={canvasMode === 'loading'}
-            />
+      {/* Editor Content - img.ly CE.SDK Editor */}
+      <div className="flex-grow flex flex-col h-full">
+        {isLoading && (
+          <div className="flex-grow flex items-center justify-center">
+            <div className="animate-pulse text-center">
+              <div className="text-lg font-semibold">Loading design...</div>
+            </div>
           </div>
-        </div>
-
-        {/* Right Sidebar - Properties Panel */}
-        <EditorProperties />
+        )}
+        
+        {!isLoading && design && (
+          <ImglyEditor 
+            design={design} 
+            onSave={(updatedDesign) => {
+              // Update local state
+              setDesignName(updatedDesign.name);
+              if (updatedDesign.content) {
+                if (typeof updatedDesign.content === 'object' && 'objects' in updatedDesign.content) {
+                  setCanvasObjects(updatedDesign.content.objects || []);
+                }
+              }
+              
+              // Save to server
+              setCanvasMode('saving');
+              saveMutation.mutate();
+            }}
+            className="flex-grow"
+          />
+        )}
+        
+        {!isLoading && !design && !id && (
+          <div className="flex-grow flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-lg font-semibold">Create a new design</div>
+              <div className="mt-4">
+                <Button 
+                  onClick={() => {
+                    // Create a default design for new designs
+                    const defaultDesign: Design = {
+                      id: 0, // This will be assigned by the server
+                      name: designName,
+                      category: canvasProps.category || "signboard",
+                      subcategory: "all",
+                      content: { objects: [] },
+                      width: canvasProps.width || 800,
+                      height: canvasProps.height || 600,
+                      thumbnail: null,
+                      createdAt: new Date(),
+                      updatedAt: new Date(),
+                    };
+                    
+                    // Create the design 
+                    saveMutation.mutate();
+                  }}
+                >
+                  Start with blank canvas
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
