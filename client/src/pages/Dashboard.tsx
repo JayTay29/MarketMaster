@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import RecentProjects from "@/components/RecentProjects";
 import TemplateCategories from "@/components/TemplateCategories";
+import { CreateDesignWizard } from "@/components/CreateDesignWizard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { PlusIcon, FilterIcon } from "lucide-react";
@@ -10,6 +12,7 @@ import { useLocation } from "wouter";
 export default function Dashboard() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const [wizardOpen, setWizardOpen] = useState(false);
   
   const { data: designs, isLoading, error } = useQuery({
     queryKey: ['/api/designs'],
@@ -24,7 +27,7 @@ export default function Dashboard() {
   }
 
   const handleCreateNew = () => {
-    navigate("/templates/signboard");
+    setWizardOpen(true);
   };
 
   return (
@@ -68,6 +71,9 @@ export default function Dashboard() {
       <TemplateCategories />
 
       {/* Removed Tutorials Section */}
+      
+      {/* Design Wizard */}
+      <CreateDesignWizard open={wizardOpen} onOpenChange={setWizardOpen} />
     </div>
   );
 }
