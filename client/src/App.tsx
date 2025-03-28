@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -21,15 +21,26 @@ function Router() {
 }
 
 function App() {
+  const [location] = useLocation();
+  const isEditorPage = location.startsWith("/editor");
+  
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex flex-col min-h-screen">
-        <Navbar />
-        <div className="flex-grow">
-          <Router />
+      {isEditorPage ? (
+        <div className="flex flex-col min-h-screen">
+          <div className="flex-grow">
+            <Router />
+          </div>
+          <Toaster />
         </div>
-        <Toaster />
-      </div>
+      ) : (
+        <div className="flex flex-col min-h-screen">
+          <Navbar>
+            <Router />
+          </Navbar>
+          <Toaster />
+        </div>
+      )}
     </QueryClientProvider>
   );
 }

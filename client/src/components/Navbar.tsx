@@ -1,73 +1,122 @@
 import { Link, useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { HelpCircle, BellIcon } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { 
+  LayoutDashboard, 
+  Images, 
+  FolderOpen, 
+} from "lucide-react";
+import { ReactNode } from "react";
 
-export default function Navbar() {
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarTrigger,
+  SidebarContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarRail,
+  SidebarInset
+} from "@/components/ui/sidebar";
+
+interface NavbarProps {
+  children?: ReactNode;
+}
+
+export default function Navbar({ children }: NavbarProps) {
   const [location] = useLocation();
 
-  const isEditorPage = location.startsWith("/editor");
-
-  // Hide navbar on editor page to maximize space
-  if (isEditorPage) {
-    return null;
-  }
-
   return (
-    <nav className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
-      <div className="flex items-center space-x-10">
-        <Link href="/">
-          <div className="flex items-center space-x-2 cursor-pointer">
-            <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-              </svg>
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex min-h-screen">
+        <Sidebar>
+          <SidebarHeader className="flex items-center pb-4">
+            <Link href="/">
+              <div className="flex items-center space-x-2 px-2 cursor-pointer">
+                <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                  </svg>
+                </div>
+                <h1 className="text-xl font-semibold font-poppins text-gray-900">DesignPlatform</h1>
+              </div>
+            </Link>
+            <div className="ml-auto">
+              <SidebarTrigger />
             </div>
-            <h1 className="text-xl font-semibold font-poppins text-gray-900">DesignPlatform</h1>
-          </div>
-        </Link>
+          </SidebarHeader>
+          
+          <SidebarContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <Link href="/">
+                  <SidebarMenuButton 
+                    asChild
+                    data-active={location === "/"} 
+                  >
+                    <div className="flex items-center">
+                      <LayoutDashboard className="h-5 w-5 mr-3" />
+                      <span>Dashboard</span>
+                    </div>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <Link href="/templates/signboard">
+                  <SidebarMenuButton 
+                    asChild
+                    data-active={location.includes("/templates")}
+                  >
+                    <div className="flex items-center">
+                      <Images className="h-5 w-5 mr-3" />
+                      <span>Templates</span>
+                    </div>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <Link href="/projects">
+                  <SidebarMenuButton 
+                    asChild
+                    data-active={location.includes("/projects")}
+                  >
+                    <div className="flex items-center">
+                      <FolderOpen className="h-5 w-5 mr-3" />
+                      <span>Projects</span>
+                    </div>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarContent>
+        </Sidebar>
+        <SidebarRail />
         
-        <div className="hidden md:flex space-x-6">
-          <NavLink href="/" label="Dashboard" isActive={location === "/"} />
-          <NavLink href="/templates/signboard" label="Templates" isActive={location.includes("/templates")} />
-          <NavLink href="/projects" label="Projects" isActive={location.includes("/projects")} />
-          <NavLink href="/elements" label="Elements" isActive={location.includes("/elements")} />
-        </div>
+        {/* Main Content Area */}
+        <SidebarInset className="overflow-auto">
+          {/* Mobile Header */}
+          <div className="flex items-center h-14 border-b border-gray-200 px-4 md:hidden">
+            <SidebarTrigger />
+            <Link href="/">
+              <div className="flex items-center ml-3">
+                <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                  </svg>
+                </div>
+              </div>
+            </Link>
+          </div>
+          
+          {/* Main content */}
+          <div className="p-6">
+            {children}
+          </div>
+        </SidebarInset>
       </div>
-      
-      <div className="flex items-center space-x-4">
-        <Button variant="outline" size="icon">
-          <HelpCircle className="h-5 w-5" />
-        </Button>
-        <Button variant="outline" size="icon">
-          <BellIcon className="h-5 w-5" />
-        </Button>
-        <Avatar>
-          <AvatarFallback className="bg-primary text-white">JS</AvatarFallback>
-        </Avatar>
-      </div>
-    </nav>
-  );
-}
-
-interface NavLinkProps {
-  href: string;
-  label: string;
-  isActive: boolean;
-}
-
-function NavLink({ href, label, isActive }: NavLinkProps) {
-  return (
-    <Link href={href}>
-      <span className={cn(
-        "px-1 py-2 text-sm font-medium font-inter transition-colors cursor-pointer",
-        isActive 
-          ? "text-primary border-b-2 border-primary" 
-          : "text-gray-400 hover:text-gray-900"
-      )}>
-        {label}
-      </span>
-    </Link>
+    </SidebarProvider>
   );
 }
